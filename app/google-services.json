@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "168423198962",
+    "project_id": "secondwear-a65ec",
+    "storage_bucket": "secondwear-a65ec.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:168423198962:android:51b33f1c6f814e81e5006b",
+        "android_client_info": {
+          "package_name": "hr.ferit.antonioparadzik"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCyGK-HjP1p8I3IpPVSvBthyu4ZqdkaHAY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
