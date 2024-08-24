@@ -9,14 +9,14 @@ import androidx.navigation.compose.composable
 import com.google.firebase.auth.FirebaseAuth
 import hr.ferit.antonioparadzik.view.LoginScreen
 import hr.ferit.antonioparadzik.view.RegisterScreen
-import hr.ferit.antonioparadzik.view.bottombar.AddProductScreen
-import hr.ferit.antonioparadzik.view.bottombar.AppScaffold
-import hr.ferit.antonioparadzik.view.bottombar.HomeScreen
-import hr.ferit.antonioparadzik.view.bottombar.ProfileScreen
+import hr.ferit.antonioparadzik.view.AddProductScreen
+import hr.ferit.antonioparadzik.view.HomeScreen
+import hr.ferit.antonioparadzik.view.ProfileScreen
 import hr.ferit.antonioparadzik.viewmodel.AddProductViewModel
 import hr.ferit.antonioparadzik.viewmodel.AuthenticationViewModel
 import hr.ferit.antonioparadzik.viewmodel.HomeViewModel
 
+/*
 @Composable
 fun NavigationHost(
     navController: NavController
@@ -64,4 +64,4 @@ fun NavigationHost(
         }
 
     }
-}
+}*/

@@ -1,4 +1,4 @@
-package hr.ferit.antonioparadzik.view.bottombar
+package hr.ferit.antonioparadzik.view
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -21,14 +21,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import hr.ferit.antonioparadzik.R
 import hr.ferit.antonioparadzik.viewmodel.AuthenticationViewModel
 import hr.ferit.antonioparadzik.viewmodel.HomeViewModel
 
 @Composable
-fun HomeScreen(navController: NavController, homeViewModel: HomeViewModel, authenticationViewModel: AuthenticationViewModel) {
-
+fun FeedScreen(navHostController: NavHostController, homeViewModel: HomeViewModel, authenticationViewModel: AuthenticationViewModel, rootNavController: NavHostController) {
+    val context = LocalContext.current
     MaterialTheme {
         LazyColumn(
             modifier = Modifier
@@ -37,7 +38,7 @@ fun HomeScreen(navController: NavController, homeViewModel: HomeViewModel, authe
                 .padding(16.dp)
         ) {
             item {
-                Header(authenticationViewModel, navController)
+                Header(authenticationViewModel, navHostController, rootNavController)
             }
             items(2) { index ->
                 ProductCard()
@@ -49,7 +50,7 @@ fun HomeScreen(navController: NavController, homeViewModel: HomeViewModel, authe
 val user = FirebaseAuth.getInstance().currentUser
 val username = user?.displayName
 @Composable
-fun Header(authenticationViewModel: AuthenticationViewModel, navController: NavController) {
+fun Header(authenticationViewModel: AuthenticationViewModel, navController: NavController, rootNavController: NavHostController) {
     val context = LocalContext.current
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -62,7 +63,7 @@ fun Header(authenticationViewModel: AuthenticationViewModel, navController: NavC
             contentDescription = null,
             modifier = Modifier
                 .size(24.dp)
-                .clickable { authenticationViewModel.logout(context, navController) }
+                .clickable { authenticationViewModel.logout(context, navController, rootNavController) }
 
         )
     }

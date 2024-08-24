@@ -1,4 +1,5 @@
 package hr.ferit.antonioparadzik.navigation
+/*
 
 import androidx.annotation.DrawableRes
 import hr.ferit.antonioparadzik.R
@@ -18,4 +19,4 @@ sealed class NavigationScreen(val route: String, val title: String, @DrawableRes
         title = "Profile",
         icon = R.drawable.ic_user
     )
-}
+}*/

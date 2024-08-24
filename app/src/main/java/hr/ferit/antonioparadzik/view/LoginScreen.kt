@@ -23,10 +23,11 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import hr.ferit.antonioparadzik.viewmodel.AuthenticationViewModel
 
 @Composable
-fun LoginScreen(navController: NavController, viewModel: AuthenticationViewModel){
+fun LoginScreen(navController: NavHostController, viewModel: AuthenticationViewModel){
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     val context = LocalContext.current
