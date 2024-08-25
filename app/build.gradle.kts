@@ -102,7 +102,7 @@ dependencies {
 
     implementation ("com.google.guava:guava:31.1-android")
 
-
-
-
+    // Location
+    implementation("com.google.android.gms:play-services-location:21.1.0")
+    implementation("com.google.accompanist:accompanist-permissions:0.35.0-alpha")
 }
