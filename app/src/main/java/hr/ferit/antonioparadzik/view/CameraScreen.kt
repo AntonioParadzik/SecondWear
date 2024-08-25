@@ -26,13 +26,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
+import hr.ferit.antonioparadzik.viewmodel.CameraViewModel
 import java.text.SimpleDateFormat
 import java.util.Locale
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 @Composable
-fun CameraScreen(navHostController: NavHostController,) {
+fun CameraScreen(navHostController: NavHostController, cameraViewModel: CameraViewModel) {
     val lensFacing = CameraSelector.LENS_FACING_BACK
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
@@ -52,50 +53,10 @@ fun CameraScreen(navHostController: NavHostController,) {
     }
     Box(contentAlignment = Alignment.BottomCenter, modifier = Modifier.fillMaxSize()) {
         AndroidView({ previewView }, modifier = Modifier.fillMaxSize())
-        Button(onClick = { captureImage(navHostController, imageCapture, context) }, modifier = Modifier.padding(bottom = 52.dp)) {
+        Button(onClick = { cameraViewModel.captureImage(navHostController, imageCapture, context) }, modifier = Modifier.padding(bottom = 52.dp)) {
             Text(text = "Capture Image")
         }
     }
-}
-
-private fun captureImage(navHostController: NavHostController,imageCapture: ImageCapture, context: Context) {
-    val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(System.currentTimeMillis())
-    val name = "IMG_$timestamp.jpeg"
-
-    val contentValues = ContentValues().apply {
-        put(MediaStore.MediaColumns.DISPLAY_NAME, name)
-        put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/CameraX-Image")
-        }
-    }
-
-    val outputOptions = ImageCapture.OutputFileOptions
-        .Builder(
-            context.contentResolver,
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-            contentValues
-        )
-        .build()
-    imageCapture.takePicture(
-        outputOptions,
-        ContextCompat.getMainExecutor(context),
-        object : ImageCapture.OnImageSavedCallback {
-            override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                val uri = outputFileResults.savedUri
-                uri?.let {
-                    // Pass the URI back to AddProductScreen
-                    navHostController.previousBackStackEntry?.savedStateHandle?.set("imageUri", uri.toString())
-                    navHostController.popBackStack()  // Return to the previous screen
-                }
-            }
-
-            override fun onError(exception: ImageCaptureException) {
-                // Handle error
-                println("Failed $exception")
-            }
-        }
-    )
 }
 
 
