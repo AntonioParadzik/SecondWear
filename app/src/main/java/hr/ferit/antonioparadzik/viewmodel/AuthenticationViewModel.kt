@@ -1,15 +1,19 @@
 package hr.ferit.antonioparadzik.viewmodel
 
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.firestore.firestore
 import hr.ferit.antonioparadzik.ScreenRoutes
 
 class AuthenticationViewModel: ViewModel() {
+    private val firestore = Firebase.firestore
     fun signIn(context: Context, email: String, password: String, navController: NavController) {
         if (email.isBlank() || password.isBlank()) {
             Toast.makeText(context, "Email and password cannot be empty", Toast.LENGTH_SHORT).show()
@@ -46,13 +50,41 @@ class AuthenticationViewModel: ViewModel() {
                     user?.updateProfile(profileUpdates)
                         ?.addOnCompleteListener { task ->
                             if (task.isSuccessful) {
-                                Toast.makeText(context, "Registered successfully", Toast.LENGTH_SHORT).show()
+                                // Create user document in Firestore
+                                createUserDocument(user.uid, username)
+
+                                Toast.makeText(
+                                    context,
+                                    "Registered successfully",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                navController.navigate("login_screen")
+                            } else {
+                                Toast.makeText(context, "Profile update failed", Toast.LENGTH_SHORT)
+                                    .show()
                             }
                         }
-                    navController.navigate("login_screen")
                 } else {
                     Toast.makeText(context, "Registration failed", Toast.LENGTH_SHORT).show()
                 }
+            }
+    }
+
+    private fun createUserDocument(userId: String, username: String) {
+        val userDocument = hashMapOf(
+            "username" to username,
+            "userId" to userId,
+            "profileImageUrl" to "" // Initialize as empty; can be updated later
+        )
+
+        firestore.collection("users").document(userId)
+            .set(userDocument)
+            .addOnSuccessListener {
+                // User document created successfully
+            }
+            .addOnFailureListener { exception ->
+                // Handle failure
+                Log.e("Firestore", "Error creating user document", exception)
             }
     }
 
