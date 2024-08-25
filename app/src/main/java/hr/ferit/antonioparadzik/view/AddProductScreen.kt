@@ -1,6 +1,7 @@
 package hr.ferit.antonioparadzik.view
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
+import com.google.firebase.auth.FirebaseAuth
 import hr.ferit.antonioparadzik.ScreenRoutes
 import hr.ferit.antonioparadzik.viewmodel.AddProductViewModel
 import hr.ferit.antonioparadzik.viewmodel.HomeViewModel
@@ -35,10 +37,12 @@ import hr.ferit.antonioparadzik.viewmodel.HomeViewModel
 @Composable
 fun AddProductScreen(navHostController: NavHostController, homeViewModel: HomeViewModel, addProductViewModel: AddProductViewModel){
     val context = LocalContext.current
+    val userId = remember { FirebaseAuth.getInstance().currentUser?.uid ?: "" }
 
-    var imageUri by remember {
-        mutableStateOf<Uri?>(null)
-    }
+    var productName by remember { mutableStateOf("") }
+    var productSize by remember { mutableStateOf("") }
+    var productPrice by remember { mutableStateOf("") }
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
@@ -92,8 +96,8 @@ fun AddProductScreen(navHostController: NavHostController, homeViewModel: HomeVi
         Spacer(modifier = Modifier.height(16.dp))
 
         TextField(
-            value = "",
-            onValueChange = {},
+            value = productName.toString()   ,
+            onValueChange = { productName = it },
             label = { Text("Product") },
             modifier = Modifier.fillMaxWidth()
         )
@@ -101,8 +105,8 @@ fun AddProductScreen(navHostController: NavHostController, homeViewModel: HomeVi
         Spacer(modifier = Modifier.height(8.dp))
 
         TextField(
-            value = "",
-            onValueChange = {},
+            value = productSize.toString(),
+            onValueChange = { productSize = it },
             label = { Text("Size") },
             modifier = Modifier.fillMaxWidth()
         )
@@ -110,15 +114,26 @@ fun AddProductScreen(navHostController: NavHostController, homeViewModel: HomeVi
         Spacer(modifier = Modifier.height(8.dp))
 
         TextField(
-            value = "",
-            onValueChange = {},
-            label = { Text("Price") },
+            value = productPrice.toString(),
+            onValueChange = { productPrice = it },
+            label = { Text("Price (in Euros)") },
             modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(onClick = {}) {
+        Button(onClick = {
+            imageUri?.let {
+                addProductViewModel.uploadImageAndSavePost(
+                    context,
+                    it,
+                    productName,
+                    productSize,
+                    productPrice,
+                    userId // Pass userId to the ViewModel method
+                )
+            }
+        }) {
             Text("Post")
         }
     }
