@@ -16,6 +16,7 @@ import hr.ferit.antonioparadzik.view.ProductScreen
 import hr.ferit.antonioparadzik.view.ProfileScreen
 import hr.ferit.antonioparadzik.viewmodel.AddProductViewModel
 import hr.ferit.antonioparadzik.viewmodel.AuthenticationViewModel
+import hr.ferit.antonioparadzik.viewmodel.CameraViewModel
 import hr.ferit.antonioparadzik.viewmodel.HomeViewModel
 
 @Composable
@@ -28,6 +29,7 @@ fun HomeNavGraph(
     //val homeViewModel: HomeViewModel = viewModel()
     val addProductViewModel: AddProductViewModel = viewModel()
     val authenticationViewModel: AuthenticationViewModel = viewModel()
+    val cameraViewModel: CameraViewModel = viewModel()
     NavHost(
         navController = navController,
         route = ScreenRoutes.HomeNav.route,
@@ -58,7 +60,7 @@ fun HomeNavGraph(
         }
 
         composable(route = ScreenRoutes.CameraScreen.route){
-            CameraScreen(navHostController = navController)
+            CameraScreen(navHostController = navController, cameraViewModel)
         }
     }
 }

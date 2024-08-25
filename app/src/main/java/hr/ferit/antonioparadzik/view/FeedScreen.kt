@@ -10,6 +10,12 @@ import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,14 +28,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.compose.rememberImagePainter
 import com.google.firebase.auth.FirebaseAuth
 import hr.ferit.antonioparadzik.R
+import hr.ferit.antonioparadzik.model.Post
 import hr.ferit.antonioparadzik.viewmodel.AuthenticationViewModel
 import hr.ferit.antonioparadzik.viewmodel.HomeViewModel
 
 @Composable
 fun FeedScreen(navHostController: NavHostController, homeViewModel: HomeViewModel, authenticationViewModel: AuthenticationViewModel, rootNavController: NavHostController) {
     val context = LocalContext.current
+    homeViewModel.fetchPosts(context)
+    val posts by homeViewModel.posts.collectAsState()
+
     MaterialTheme {
         LazyColumn(
             modifier = Modifier
@@ -40,8 +53,8 @@ fun FeedScreen(navHostController: NavHostController, homeViewModel: HomeViewMode
             item {
                 Header(authenticationViewModel, navHostController, rootNavController)
             }
-            items(2) { index ->
-                ProductCard()
+            items(posts.size) { index ->
+                ProductCard( post = posts[index], homeViewModel=homeViewModel)
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
@@ -53,7 +66,7 @@ val username = user?.displayName
 fun Header(authenticationViewModel: AuthenticationViewModel, navController: NavController, rootNavController: NavHostController) {
     val context = LocalContext.current
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
@@ -70,7 +83,16 @@ fun Header(authenticationViewModel: AuthenticationViewModel, navController: NavC
 }
 
 @Composable
-fun ProductCard() {
+fun ProductCard( post: Post, homeViewModel: HomeViewModel) {
+    val context = LocalContext.current
+    var cityName by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(post.latitude, post.longitude) {
+        homeViewModel.fetchCityName(context, post.latitude.toDouble(), post.longitude.toDouble()) { city ->
+            cityName = city ?: "Unknown"
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -87,22 +109,22 @@ fun ProductCard() {
                     .background(Color.Gray)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(text = "Username", modifier = Modifier.align(Alignment.CenterVertically))
+            Text(text = post.username, modifier = Modifier.align(Alignment.CenterVertically))
         }
         Spacer(modifier = Modifier.height(8.dp))
-        Image(
-            painter = painterResource(R.drawable.ic_home),
+        AsyncImage(
+            model = post.imageUrl,
             contentDescription = null,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(150.dp),
+                .height(250.dp),
             contentScale = ContentScale.Crop
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(text = "Location", color = Color.Gray)
-        Text(text = "Product", fontWeight = FontWeight.Bold)
-        Text(text = "Size:", fontWeight = FontWeight.Bold)
-        Text(text = "€XX.YY", fontWeight = FontWeight.Bold)
+        Text(text = cityName ?: "Fetching location...", color = Color.Gray)
+        Text(text = post.name, fontWeight = FontWeight.Bold)
+        Text(text = "Size: ${post.size}", fontWeight = FontWeight.Bold)
+        Text(text = "€${post.price}", fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
         Button(onClick = { /* TODO: Handle contact action */ }, modifier = Modifier.align(Alignment.End)) {
             Text(text = "Contact me")
