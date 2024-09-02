@@ -17,7 +17,6 @@ fun RootNav(
     homeViewModel: HomeViewModel
 ) {
     val rootNavController = rememberNavController()
-    val context = LocalContext.current
     NavHost(navController = rootNavController, startDestination = if (currentUser != null) ScreenRoutes.HomeNav.route else ScreenRoutes.AuthNav.route) {
         AuthNav(navController = rootNavController, authenticationViewModel)
 

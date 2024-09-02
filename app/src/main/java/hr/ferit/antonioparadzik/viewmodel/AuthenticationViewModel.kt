@@ -10,10 +10,13 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.firestore
+import com.google.firebase.messaging.FirebaseMessaging
 import hr.ferit.antonioparadzik.ScreenRoutes
 
 class AuthenticationViewModel: ViewModel() {
     private val firestore = Firebase.firestore
+    private var token: String = ""
+
     fun signIn(context: Context, email: String, password: String, navController: NavController) {
         if (email.isBlank() || password.isBlank()) {
             Toast.makeText(context, "Email and password cannot be empty", Toast.LENGTH_SHORT).show()
@@ -22,15 +25,56 @@ class AuthenticationViewModel: ViewModel() {
         FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    // Prijavljeno uspješno
                     Toast.makeText(context, "Logged in successfully", Toast.LENGTH_SHORT).show()
-                    navController.navigate(ScreenRoutes.HomeNav.route) {
-                        popUpTo("login_screen") { inclusive = true }
+                    val user = FirebaseAuth.getInstance().currentUser
+                    user?.let {
+                        fetchFcmTokenAndUpdateFirestore(it.uid)
+
+                        Toast.makeText(context, "Logged in successfully", Toast.LENGTH_SHORT).show()
+                        navController.navigate(ScreenRoutes.HomeNav.route) {
+                            popUpTo("login_screen") { inclusive = true }
+                        }
                     }
                 } else {
-                    // Prijavljivanje neuspješno
                     Toast.makeText(context, "Login failed", Toast.LENGTH_SHORT).show()
                 }
+            }
+    }
+
+    private fun fetchFcmTokenAndUpdateFirestore(userId: String) {
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.w("FCM", "Fetching FCM registration token failed", task.exception)
+                return@addOnCompleteListener
+            }
+
+            val newToken = task.result
+            Log.d("FCM", "Device FCM Token: $token")
+
+            firestore.collection("users").document(userId).get().addOnSuccessListener { document ->
+                val currentToken = document.getString("fcmToken")
+                if (newToken != currentToken) {
+                    updateUserFcmTokenInFirestore(userId, newToken)
+                } else {
+                    Log.d("Firestore", "FCM token is already up to date.")
+                }
+            }.addOnFailureListener { exception ->
+                Log.e("Firestore", "Error fetching current FCM token", exception)
+            }
+        }
+
+    }
+
+    private fun updateUserFcmTokenInFirestore(userId: String, token: String) {
+        val userDocument = mapOf("fcmToken" to token)
+
+        firestore.collection("users").document(userId)
+            .update(userDocument)
+            .addOnSuccessListener {
+                Log.d("Firestore", "FCM token updated successfully for user $userId")
+            }
+            .addOnFailureListener { exception ->
+                Log.e("Firestore", "Error updating FCM token for user $userId", exception)
             }
     }
 
@@ -39,6 +83,7 @@ class AuthenticationViewModel: ViewModel() {
             Toast.makeText(context, "Username, email and password cannot be empty", Toast.LENGTH_SHORT).show()
             return
         }
+
         FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
@@ -48,17 +93,19 @@ class AuthenticationViewModel: ViewModel() {
                         .build()
 
                     user?.updateProfile(profileUpdates)
-                        ?.addOnCompleteListener { task ->
-                            if (task.isSuccessful) {
+                        ?.addOnCompleteListener { updateTask ->
+                            if (updateTask.isSuccessful) {
                                 // Create user document in Firestore
-                                createUserDocument(user.uid, username)
+                                createUserDocument(user.uid, username, email, token)
 
                                 Toast.makeText(
                                     context,
                                     "Registered successfully",
                                     Toast.LENGTH_SHORT
                                 ).show()
-                                navController.navigate("login_screen")
+                                navController.navigate("login_screen"){
+                                    popUpTo("register_screen") { inclusive = true }
+                                }
                             } else {
                                 Toast.makeText(context, "Profile update failed", Toast.LENGTH_SHORT)
                                     .show()
@@ -70,17 +117,20 @@ class AuthenticationViewModel: ViewModel() {
             }
     }
 
-    private fun createUserDocument(userId: String, username: String) {
+    private fun createUserDocument(userId: String, username: String, email: String, token: String) {
+
         val userDocument = hashMapOf(
             "username" to username,
             "userId" to userId,
-            "profileImageUrl" to "" // Initialize as empty; can be updated later
+            "profileImageUrl" to "",
+            "email" to email,
+            "fcmToken" to token
         )
 
         firestore.collection("users").document(userId)
             .set(userDocument)
             .addOnSuccessListener {
-                // User document created successfully
+                Log.d("Firestore", "User document created successfully")
             }
             .addOnFailureListener { exception ->
                 // Handle failure

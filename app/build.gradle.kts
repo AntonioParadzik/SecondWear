@@ -66,6 +66,7 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation(libs.androidx.benchmark.macro)
+    implementation(libs.firebase.messaging.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -78,6 +79,7 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
     implementation ("com.google.firebase:firebase-auth-ktx:22.0.0")
     implementation("com.google.firebase:firebase-storage")
+    implementation("com.google.firebase:firebase-messaging")
 
 
     implementation("androidx.activity:activity-ktx:1.9.0")
@@ -88,9 +90,6 @@ dependencies {
     implementation ("androidx.compose.material:material:1.6.7")
     implementation ("androidx.activity:activity-compose:1.9.0")
     implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
-
-    implementation ("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
 
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
@@ -105,4 +104,10 @@ dependencies {
     // Location
     implementation("com.google.android.gms:play-services-location:21.1.0")
     implementation("com.google.accompanist:accompanist-permissions:0.35.0-alpha")
+
+    implementation("com.google.accompanist:accompanist-permissions:0.30.1")
+
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-moshi:2.9.0")
+
 }

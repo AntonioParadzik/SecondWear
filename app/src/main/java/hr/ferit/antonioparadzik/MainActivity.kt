@@ -5,17 +5,20 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth
 import hr.ferit.antonioparadzik.navigation.RootNav
@@ -23,7 +26,8 @@ import hr.ferit.antonioparadzik.ui.theme.SecondWearTheme
 import hr.ferit.antonioparadzik.viewmodel.AuthenticationViewModel
 import hr.ferit.antonioparadzik.viewmodel.HomeViewModel
 import android.app.AlertDialog
-import android.net.Uri
+import android.util.Log
+import android.widget.Toast
 
 class MainActivity : ComponentActivity() {
     private val authenticationViewModel: AuthenticationViewModel by viewModels()
@@ -51,7 +55,6 @@ class MainActivity : ComponentActivity() {
 
     private val settingsLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            // Check if the location settings were modified after returning from settings
             if (isLocationEnabled()) {
                 setRootNav()
             } else {
@@ -78,19 +81,32 @@ class MainActivity : ComponentActivity() {
         val coarseLocationPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
         val fineLocationPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
 
+        var notificationPermissionGranted = true
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notificationPermissionGranted = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        }
+
         return cameraPermission == PackageManager.PERMISSION_GRANTED &&
                 coarseLocationPermission == PackageManager.PERMISSION_GRANTED &&
-                fineLocationPermission == PackageManager.PERMISSION_GRANTED
+                fineLocationPermission == PackageManager.PERMISSION_GRANTED &&
+                notificationPermissionGranted
     }
 
     private fun requestPermissions() {
-        permissionsRequestLauncher.launch(
-            arrayOf(
-                Manifest.permission.CAMERA,
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            )
+        val permissions = mutableListOf(
+            Manifest.permission.CAMERA,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_FINE_LOCATION
         )
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        permissionsRequestLauncher.launch(permissions.toTypedArray())
     }
 
     private fun isLocationEnabled(): Boolean {
@@ -100,74 +116,109 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun promptUserToEnableLocation() {
-        AlertDialog.Builder(this)
-            .setTitle("Enable Location Services")
-            .setMessage("Please enable location service in settings.")
-            .setPositiveButton("Settings") { _, _ ->
+        showDialog(
+            title = "Enable Location Services",
+            message = "Please enable location service in settings.",
+            positiveButtonText = "Settings",
+            positiveButtonAction = {
                 val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
                 settingsLauncher.launch(intent)
-            }
-            .setNegativeButton("Cancel") { _, _ ->
+            },
+            negativeButtonText = "Cancel",
+            negativeButtonAction = {
                 showLocationNotEnabledDialog()
             }
-            .show()
+        )
     }
 
     private fun showLocationNotEnabledDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("Location Services Required")
-            .setMessage("This app requires location services to function. Please enable location services in settings.")
-            .setPositiveButton("Retry") { _, _ ->
+        showDialog(
+            title = "Location Services Required",
+            message = "This app requires location services to function. Please enable location services in settings.",
+            positiveButtonText = "Retry",
+            positiveButtonAction = {
                 promptUserToEnableLocation()
+            },
+            negativeButtonText = "Exit",
+            negativeButtonAction = {
+                finish()
             }
-            .setNegativeButton("Exit") { _, _ ->
-                finish() // Exit the app or handle accordingly
-            }
-            .show()
+        )
     }
 
     private fun showPermissionDeniedDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("Permissions Required")
-            .setMessage("Camera and location permissions are required for this app to function. Please grant the necessary permissions.")
-            .setPositiveButton("Retry") { _, _ ->
+        showDialog(
+            title = "Permissions Required",
+            message = "Camera, location, and notification permissions are required for this app to function. Please grant the necessary permissions.",
+            positiveButtonText = "Retry",
+            positiveButtonAction = {
                 requestPermissions()
+            },
+            negativeButtonText = "Exit",
+            negativeButtonAction = {
+                finish()
             }
-            .setNegativeButton("Exit") { _, _ ->
-                finish() // Exit the app or handle accordingly
-            }
-            .show()
+        )
     }
 
     private fun showPermissionDeniedPermanentlyDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("Permissions Denied")
-            .setMessage("You have denied permissions permanently. Please enable them in app settings.")
-            .setPositiveButton("Open Settings") { _, _ ->
+        showDialog(
+            title = "Permissions Denied",
+            message = "You have denied permissions permanently. Please enable them in app settings.",
+            positiveButtonText = "Open Settings",
+            positiveButtonAction = {
                 val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                     data = Uri.parse("package:${packageName}")
                 }
                 startActivity(intent)
+            },
+            negativeButtonText = "Exit",
+            negativeButtonAction = {
+                finish()
             }
-            .setNegativeButton("Exit") { _, _ ->
-                finish() // Exit the app or handle accordingly
-            }
+        )
+    }
+
+    private fun showDialog(
+        title: String,
+        message: String,
+        positiveButtonText: String,
+        positiveButtonAction: () -> Unit,
+        negativeButtonText: String,
+        negativeButtonAction: () -> Unit
+    ) {
+        AlertDialog.Builder(this)
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton(positiveButtonText) { _, _ -> positiveButtonAction() }
+            .setNegativeButton(negativeButtonText) { _, _ -> negativeButtonAction() }
             .show()
     }
 
     private fun shouldShowRequestPermissionRationale(): Boolean {
-        // Check if we should show an explanation to the user
-        return arrayOf(
+        val permissions = mutableListOf(
             Manifest.permission.CAMERA,
             Manifest.permission.ACCESS_COARSE_LOCATION,
             Manifest.permission.ACCESS_FINE_LOCATION
-        ).any { shouldShowRequestPermissionRationale(it) }
+        )
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        return permissions.any { shouldShowRequestPermissionRationale(it) }
     }
 
     private fun setRootNav() {
         setContent {
             val currentUser = FirebaseAuth.getInstance().currentUser
-
+            if (currentUser != null) {
+                Log.e("MainActivity", "currentUser UID: ${currentUser.uid}")
+                Log.e("MainActivity", "currentUser Provider ID: ${currentUser.providerId}")
+                Log.e("MainActivity", "currentUser Email: ${currentUser.email}")
+            } else {
+                Log.e("MainActivity", "currentUser is null")
+            }
             SecondWearTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),

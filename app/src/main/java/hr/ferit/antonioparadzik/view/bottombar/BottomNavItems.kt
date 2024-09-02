@@ -15,7 +15,7 @@ sealed class BottomNavItems(
     )
 
     data object AddProductItem : BottomNavItems(
-        title = "AddProduct",
+        title = "Add Product",
         route = ScreenRoutes.AddProductScreen.route,
         icon = R.drawable.ic_add
     )

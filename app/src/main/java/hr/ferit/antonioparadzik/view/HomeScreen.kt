@@ -1,14 +1,22 @@
 package hr.ferit.antonioparadzik.view
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Icon
+import androidx.compose.material.SnackbarDefaults.backgroundColor
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -35,25 +43,25 @@ fun HomeScreen(
 
     Scaffold(
         bottomBar = {
-            BottomNavigation {
+            BottomNavigation(
+                backgroundColor = Color.Black,
+                contentColor = Color.White,
+            ) {
+
                 val navBackStackEntry by bottomNavController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
 
                 items.forEach { item ->
                     BottomNavigationItem(
                         selected = currentDestination?.hierarchy?.any { it.route == item.route } == true,
+                        selectedContentColor = Color.White,
+                        unselectedContentColor = Color.White.copy(0.4f),
                         onClick = {
                             bottomNavController.navigate(item.route) {
-                                // Pop up to the start destination of the graph to
-                                // avoid building up a large stack of destinations
-                                // on the back stack as users select items
                                 popUpTo(bottomNavController.graph.findStartDestination().id) {
                                     saveState = true
                                 }
-                                // Avoid multiple copies of the same destination when
-                                // reselecting the same item
                                 launchSingleTop = true
-                                // Restore state when reselecting a previously selected item
                                 restoreState = true
                             }
                         },
@@ -61,9 +69,14 @@ fun HomeScreen(
                             Icon(
                                 painter = painterResource(id = item.icon),
                                 contentDescription = item.title,
+                                modifier = Modifier.padding(bottom = 6.dp)
                             )
                         },
-                        label = { Text(text = item.title) }
+                        label = { Text(
+                            text = item.title,
+                            color = Color.White,
+                            fontSize = 14.sp
+                        ) }
                     )
                 }
             }
@@ -73,8 +86,7 @@ fun HomeScreen(
         HomeNavGraph(
             navController = bottomNavController,
             rootNavController = rootNavController,
-            homeViewModel = homeViewModel
-
+            homeViewModel = homeViewModel,
         )
     }
 }

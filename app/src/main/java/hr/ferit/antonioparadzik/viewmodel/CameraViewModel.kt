@@ -39,14 +39,12 @@ class CameraViewModel: ViewModel() {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                     val uri = outputFileResults.savedUri
                     uri?.let {
-                        // Pass the URI back to AddProductScreen
                         navHostController.previousBackStackEntry?.savedStateHandle?.set("imageUri", uri.toString())
-                        navHostController.popBackStack()  // Return to the previous screen
+                        navHostController.popBackStack()
                     }
                 }
 
                 override fun onError(exception: ImageCaptureException) {
-                    // Handle error
                     println("Failed $exception")
                 }
             }
